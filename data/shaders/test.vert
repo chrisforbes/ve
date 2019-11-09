@@ -1,19 +1,23 @@
 #version 450 core
 
+layout(location=0) in vec3 v_pos;
+layout(location=1) in vec3 v_norm;
+
+uniform mat4 mvp;
+
 out gl_PerVertex
 {
     vec4 gl_Position;
 };
 
-layout(location=0) out vec3 color;
+layout(location=0) out vec3 pos;
+layout(location=1) out vec3 norm;
 
 void main()
 {
-    gl_Position.x = gl_VertexID * 0.5 - 0.5;
-    gl_Position.y = (gl_VertexID == 1) ? 0.5 : -0.5;
-    gl_Position.zw = vec2(1);
+    // modelspace position and normal directly to FS
+    pos = v_pos;
+    norm = v_norm;
 
-    color.r = float(gl_VertexID == 0);
-    color.g = float(gl_VertexID == 1);
-    color.b = float(gl_VertexID == 2);
+    gl_Position = mvp * vec4(v_pos, 1);
 }
