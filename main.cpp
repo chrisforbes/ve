@@ -139,6 +139,7 @@ int main() {
     glfwSwapInterval(1);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
 
     GLuint voxel_tex;
     glGenTextures(1, &voxel_tex);

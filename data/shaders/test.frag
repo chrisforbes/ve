@@ -29,7 +29,7 @@ bool march(vec3 o, vec3 d, out vec3 n, out vec3 pp)
 
     while (t < 1.75*16)         // max cast across this thing is sqrt(3) * dim
     {
-        if (p.x < 16 && p.y < 16 && p.z < 16 && texelFetch(s_voxels, p, 0).x != 0)
+        if (texelFetch(s_voxels, p, 0).x != 0)
         {
             pp = o + t * d;
             return true;
@@ -75,7 +75,7 @@ void main()
     vec3 n;
     vec3 pp;
     if (!march(pos * 16, normalize(pos - camera_pos), n, pp))
-        discard;
-
-    o_color = vec4(pp/16, 1) * vec4(clamp(dot(n, light_dir), 0, 1));
+        o_color = vec4(0.4, 0.4, 0.4, 0.4);
+else
+    o_color = vec4(pp/16, 1) * vec4(vec3(clamp(dot(n, light_dir), 0, 1)), 1);
 }
