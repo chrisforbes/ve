@@ -112,23 +112,9 @@ int main() {
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
 
-    GLuint voxel_tex;
-    glGenTextures(1, &voxel_tex);
-    glBindTexture(GL_TEXTURE_3D, voxel_tex);
-    glTexStorage3D(GL_TEXTURE_3D, 1, GL_R8UI, 16, 16, 16);
+    GLuint vox = load_vox("data/vox/chr_knight.vox");
 
-    char vox[16 * 16 * 16];
-    for (int i = 0; i < 16; i++)
-        for (int j = 0; j < 16; j++)
-            for (int k = 0; k < 16; k++)
-                vox[i*16*16 + j*16 + k] = (i + j + k) % 8 == 0;
-
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, 16, 16, 16, GL_RED_INTEGER, GL_UNSIGNED_BYTE, vox);
-
-    GLuint vox2 = load_vox("data/vox/chr_knight.vox");
-
-    glBindTexture(GL_TEXTURE_3D, vox2);
+    glBindTexture(GL_TEXTURE_3D, vox);
 
     while (!glfwWindowShouldClose(wnd))
     {
