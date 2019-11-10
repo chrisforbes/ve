@@ -3,7 +3,7 @@ project(ve)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(ve main.cpp)
+add_executable(ve main.cpp ve.h shader.cpp)
 
 find_package(OpenGL REQUIRED)
 find_package(glfw3 3.3 REQUIRED)
