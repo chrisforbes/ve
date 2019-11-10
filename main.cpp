@@ -126,6 +126,10 @@ int main() {
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, 16, 16, 16, GL_RED_INTEGER, GL_UNSIGNED_BYTE, vox);
 
+    GLuint vox2 = load_vox("data/vox/chr_knight.vox");
+
+    glBindTexture(GL_TEXTURE_3D, vox2);
+
     while (!glfwWindowShouldClose(wnd))
     {
         glfwPollEvents();
@@ -142,8 +146,8 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         auto target = glm::vec3(0.5f, 0.5f, 0.5f);
-        auto eye = target + dist * glm::vec3(cosf(angle) * cosf(elev), sinf(elev), sinf(angle) * cosf(elev));
-        auto up = glm::vec3(0,1, 0);
+        auto eye = target + dist * glm::vec3(cosf(angle) * cosf(elev), sinf(angle) * cosf(elev), sinf(elev));
+        auto up = glm::vec3(0,0, 1);
         auto view = glm::lookAt(eye, target, up);
         auto proj = glm::perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
 

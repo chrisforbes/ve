@@ -1,7 +1,7 @@
 
 [x] Basic voxel rendering
-[ ] Support loading a .vox
-[ ] Non-cube bounding volumes
+[x] Support loading a .vox
+[x] Non-cube bounding volumes
 [ ] Allow transforming the volume
 [ ] Compute proper depth
 [ ] Splat the voxel models into a global map for GI/shadows/etc

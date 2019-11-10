@@ -9,6 +9,7 @@ layout(binding=0) uniform usampler3D s_voxels;
 uniform vec3 camera_pos;
 
 vec3 light_dir = normalize(vec3(1,0.3,0));
+ivec3 size = textureSize(s_voxels, 0).xyz;
 
 float max_along_axis(float o, float d)
 {
@@ -74,10 +75,10 @@ void main()
 {
     vec3 n;
     vec3 pp;
-    if (!march(pos * 16, normalize(pos - camera_pos), n, pp))
+    if (!march(pos * size, normalize(pos - camera_pos), n, pp))
         o_color = vec4(0.4, 0.4, 0.4, 0.4);
     else
     {
-        o_color = vec4(pp/16, 1) * vec4(vec3(clamp(dot(n, light_dir), 0, 1)), 1);
+        o_color = vec4(pp/size, 1) * vec4(vec3(clamp(dot(n, light_dir), 0, 1)), 1);
     }
 }
