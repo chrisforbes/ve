@@ -134,7 +134,7 @@ int main() {
 
     float angle = 0;
     float elev = 0.3;
-    float dist = 3;
+    float dist = 2;
 
     glfwSwapInterval(1);
     glEnable(GL_DEPTH_TEST);
