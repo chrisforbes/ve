@@ -60,7 +60,7 @@ namespace data {
             {1, 0, 1, 0,  0,  1},
             {1, 1, 1, 0,  0,  1},
 
-            // NY face
+             // NY face
             {0, 0, 0, 0,  -1, 0},
             {1, 0, 0, 0,  -1, 0},
             {0, 0, 1, 0,  -1, 0},
@@ -149,7 +149,9 @@ int main() {
     for (int i = 0; i < 16; i++)
         for (int j = 0; j < 16; j++)
             for (int k = 0; k < 16; k++)
-                vox[i*16*16 + j*16 + k] = (i + j + k) % 4 == 0;
+                vox[i*16*16 + j*16 + k] = (i + j + k) % 8 == 0;
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, 16, 16, 16, GL_RED_INTEGER, GL_UNSIGNED_BYTE, vox);
 
     while (!glfwWindowShouldClose(wnd))
@@ -181,7 +183,7 @@ int main() {
         glUseProgramStages(pipe, GL_VERTEX_SHADER_BIT, vs);
         glUseProgramStages(pipe, GL_FRAGMENT_SHADER_BIT, fs);
 
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glDrawArrays(GL_TRIANGLES, 0, sizeof(data::cube_verts) / sizeof(Vertex));
 
         glfwSwapBuffers(wnd);
     }
