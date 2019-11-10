@@ -96,7 +96,9 @@ namespace data {
     };
 }
 
-bool debug_depth = false;
+enum { RM_COLOR, RM_DEPTH };
+int render_mode = RM_COLOR;
+char const *render_mode_list[] = { "Color", "Depth" };
 float angle = 0;
 float elev = 0.3;
 float dist = 3;
@@ -112,10 +114,12 @@ void gui()
     ImGui::EndMainMenuBar();
 
     ImGui::Begin("Debug");
-    ImGui::Checkbox("Visualize Depth", &debug_depth);
+    ImGui::Combo("Render mode", &render_mode, render_mode_list, 2);
+
     ImGui::SliderFloat("Angle", &angle, 0, 2 * M_PI);
     ImGui::SliderFloat("Elevation", &elev, -M_PI_2 * 0.9f, M_PI_2 * 0.9f);
     ImGui::SliderFloat("Distance", &dist, 0.4, 5);
+
     ImGui::End();
 }
 
@@ -254,16 +258,20 @@ int main() {
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
 
-        if (debug_depth) {
-            glUseProgramStages(pipe, GL_VERTEX_SHADER_BIT, fullscreen_vs);
-            glUseProgramStages(pipe, GL_FRAGMENT_SHADER_BIT, debug_depth_fs);
-            glBindTextures(0, 1, &offscreen.depthAttach);
-            glDrawArrays(GL_TRIANGLES, 0, 3);
-        }
-        else {
-            // simple color copy pass for now
-            glBlitNamedFramebuffer(offscreen.fbo, 0, 0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT,
-                                   GL_NEAREST);
+        switch(render_mode)
+        {
+            case RM_COLOR:
+                // simple color copy pass for now
+                glBlitNamedFramebuffer(offscreen.fbo, 0, 0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT,
+                                       GL_NEAREST);
+                break;
+
+            case RM_DEPTH:
+                glUseProgramStages(pipe, GL_VERTEX_SHADER_BIT, fullscreen_vs);
+                glUseProgramStages(pipe, GL_FRAGMENT_SHADER_BIT, debug_depth_fs);
+                glBindTextures(0, 1, &offscreen.depthAttach);
+                glDrawArrays(GL_TRIANGLES, 0, 3);
+                break;
         }
 
         // imgui isn't properly sRGB-aware
