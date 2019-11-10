@@ -97,6 +97,9 @@ namespace data {
 }
 
 bool debug_depth = false;
+float angle = 0;
+float elev = 0.3;
+float dist = 3;
 
 void gui()
 {
@@ -110,6 +113,9 @@ void gui()
 
     ImGui::Begin("Debug");
     ImGui::Checkbox("Visualize Depth", &debug_depth);
+    ImGui::SliderFloat("Angle", &angle, 0, 2 * M_PI);
+    ImGui::SliderFloat("Elevation", &elev, -M_PI_2 * 0.9f, M_PI_2 * 0.9f);
+    ImGui::SliderFloat("Distance", &dist, 0.4, 5);
     ImGui::End();
 }
 
@@ -154,10 +160,6 @@ int main() {
     GLuint pipe;
     glGenProgramPipelines(1, &pipe);
     glBindProgramPipeline(pipe);
-
-    float angle = 0;
-    float elev = 0.3;
-    float dist = 3;
 
     glfwSwapInterval(1);
 
@@ -217,9 +219,6 @@ int main() {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        angle += 0.01f;
-        elev += 0.003f;
-
         int width, height;
         glfwGetFramebufferSize(wnd, &width, &height);
         glViewport(0, 0, width, height);
@@ -228,7 +227,6 @@ int main() {
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, offscreen.fbo);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
-        glEnable(GL_BLEND);
 
         glClearColor(0.2f, 0.2f, 0.2f, 0.2f);
         glClearDepth(1.0f);
@@ -255,7 +253,6 @@ int main() {
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
-        glDisable(GL_BLEND);
 
         if (debug_depth) {
             glUseProgramStages(pipe, GL_VERTEX_SHADER_BIT, fullscreen_vs);

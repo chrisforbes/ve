@@ -81,9 +81,7 @@ void main()
     vec3 n;
     vec3 pp;
     if (!march(pos * size, normalize(pos - camera_pos), n, pp))
-        o_color = vec4(0.4, 0.4, 0.4, 0.4);
-    else
-    {
-        o_color = voxel_color * vec4(vec3(clamp(dot(n, light_dir), 0, 1)), 1);
-    }
+        discard;
+
+    o_color = voxel_color * vec4(vec3(clamp(dot(n, light_dir), 0, 1)), 1);
 }
