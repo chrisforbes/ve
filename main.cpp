@@ -9,9 +9,18 @@
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 
-void APIENTRY on_gl_error(GLenum, GLenum, GLuint, GLenum, GLsizei, char const * msg, void const *)
+void APIENTRY on_gl_error(GLenum, GLenum, GLuint, GLenum severity, GLsizei, char const * msg, void const *)
 {
-    fprintf(stderr, "GL: %s\n", msg);
+    switch (severity)
+    {
+        case GL_DEBUG_SEVERITY_HIGH:
+        case GL_DEBUG_SEVERITY_MEDIUM:
+            fprintf(stderr, "GL: %s\n", msg);
+            break;
+
+        default:
+            break;
+    }
 }
 
 struct Vertex { float x, y, z, nx, ny, nz; };
@@ -87,6 +96,8 @@ namespace data {
     };
 }
 
+bool debug_depth = false;
+
 void gui()
 {
     if (ImGui::BeginMainMenuBar())
@@ -96,6 +107,10 @@ void gui()
         ImGui::BeginMenu(sz, false);
     }
     ImGui::EndMainMenuBar();
+
+    ImGui::Begin("Debug");
+    ImGui::Checkbox("Visualize Depth", &debug_depth);
+    ImGui::End();
 }
 
 int main() {
@@ -119,6 +134,9 @@ int main() {
     GLuint vs = load_shader(GL_VERTEX_SHADER, "data/shaders/test.vert");
     GLuint fs = load_shader(GL_FRAGMENT_SHADER, "data/shaders/test.frag");
 
+    GLuint fullscreen_vs = load_shader(GL_VERTEX_SHADER, "data/shaders/fullscreen.vert");
+    GLuint debug_depth_fs = load_shader(GL_FRAGMENT_SHADER, "data/shaders/debug_depth.frag");
+
     GLuint bo;
     glGenBuffers(1, &bo);
     glBindBuffer(GL_ARRAY_BUFFER, bo);
@@ -141,17 +159,13 @@ int main() {
     float dist = 3;
 
     glfwSwapInterval(1);
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
 
     GLuint vox = load_vox("data/vox/chr_knight.vox");
-    glBindTextures(0, 1, &vox);
 
     GLuint pal;
     glCreateTextures(GL_TEXTURE_1D, 1, &pal);
     glTextureStorage1D(pal, 1, GL_RGBA8, 256);
     glTextureSubImage1D(pal, 0, 0, 256, GL_RGBA, GL_UNSIGNED_BYTE, data::default_palette);
-    glBindTextures(1, 1, &pal);
 
     struct {
         GLuint fbo = 0;
@@ -210,6 +224,8 @@ int main() {
         offscreen.update(width, height);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, offscreen.fbo);
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_BLEND);
 
         glClearColor(0.2f, 0.2f, 0.2f, 0.2f);
         glClearDepth(1.0f);
@@ -229,13 +245,26 @@ int main() {
         glUseProgramStages(pipe, GL_VERTEX_SHADER_BIT, vs);
         glUseProgramStages(pipe, GL_FRAGMENT_SHADER_BIT, fs);
 
+        glBindTextures(0, 1, &vox);
+        glBindTextures(1, 1, &pal);
         glDrawArrays(GL_TRIANGLES, 0, sizeof(data::cube_verts) / sizeof(Vertex));
 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         glDisable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE);
+        glDisable(GL_BLEND);
 
-        // simple color copy pass for now
-        glBlitNamedFramebuffer(offscreen.fbo, 0, 0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        if (debug_depth) {
+            glUseProgramStages(pipe, GL_VERTEX_SHADER_BIT, fullscreen_vs);
+            glUseProgramStages(pipe, GL_FRAGMENT_SHADER_BIT, debug_depth_fs);
+            glBindTextures(0, 1, &offscreen.depthAttach);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+        }
+        else {
+            // simple color copy pass for now
+            glBlitNamedFramebuffer(offscreen.fbo, 0, 0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT,
+                                   GL_NEAREST);
+        }
 
         gui();
         ImGui::Render();

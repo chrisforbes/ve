@@ -3,8 +3,10 @@
 [x] Support loading a .vox
 [x] Non-cube bounding volumes
 [x] Use proper voxel palette
+[x] Integrate dear imgui so we can have some debug controls
+[x] Render offscreen
+
+[x] Add depth visualization mode
 [ ] Allow transforming the volume
 [ ] Compute proper depth
 [ ] Splat the voxel models into a global map for GI/shadows/etc
-[x] Integrate dear imgui so we can have some debug controls
-[x] Render offscreen
