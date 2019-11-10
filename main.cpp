@@ -120,6 +120,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_SRGB_CAPABLE, 1);
     auto wnd = glfwCreateWindow(1024, 768, "ve", nullptr, nullptr);
     if (!wnd)
         errx(2, "Failed to create window");
@@ -164,7 +165,7 @@ int main() {
 
     GLuint pal;
     glCreateTextures(GL_TEXTURE_1D, 1, &pal);
-    glTextureStorage1D(pal, 1, GL_RGBA8, 256);
+    glTextureStorage1D(pal, 1, GL_SRGB8_ALPHA8, 256);
     glTextureSubImage1D(pal, 0, 0, 256, GL_RGBA, GL_UNSIGNED_BYTE, data::default_palette);
 
     struct {
@@ -190,7 +191,7 @@ int main() {
                 glDeleteTextures(1, &depthAttach);
 
             glCreateTextures(GL_TEXTURE_2D, 1, &colorAttach);
-            glTextureStorage2D(colorAttach, 1, GL_RGBA8, width, height);
+            glTextureStorage2D(colorAttach, 1, GL_SRGB8_ALPHA8, width, height);
             glCreateTextures(GL_TEXTURE_2D, 1, &depthAttach);
             glTextureStorage2D(depthAttach, 1, GL_DEPTH_COMPONENT24, width, height);
 
@@ -209,6 +210,8 @@ int main() {
     while (!glfwWindowShouldClose(wnd))
     {
         glfwPollEvents();
+
+        glEnable(GL_FRAMEBUFFER_SRGB);
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -265,6 +268,9 @@ int main() {
             glBlitNamedFramebuffer(offscreen.fbo, 0, 0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT,
                                    GL_NEAREST);
         }
+
+        // imgui isn't properly sRGB-aware
+        glDisable(GL_FRAMEBUFFER_SRGB);
 
         gui();
         ImGui::Render();
