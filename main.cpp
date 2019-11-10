@@ -140,6 +140,38 @@ int main() {
     glTextureSubImage1D(pal, 0, 0, 256, GL_RGBA, GL_UNSIGNED_BYTE, data::default_palette);
     glBindTextures(1, 1, &pal);
 
+    struct {
+        GLuint fbo = 0;
+        GLuint colorAttach = 0;
+        GLuint depthAttach = 0;
+        int width = 0;
+        int height = 0;
+
+        void update(int width, int height)
+        {
+            if (fbo && width == this->width && height == this->height)
+                return;
+
+            this->width = width;
+            this->height = height;
+
+            if (!fbo)
+                glCreateFramebuffers(1, &fbo);
+            if (colorAttach)
+                glDeleteTextures(1, &colorAttach);
+            if (depthAttach)
+                glDeleteTextures(1, &depthAttach);
+
+            glCreateTextures(GL_TEXTURE_2D, 1, &colorAttach);
+            glTextureStorage2D(colorAttach, 1, GL_RGBA8, width, height);
+            glCreateTextures(GL_TEXTURE_2D, 1, &depthAttach);
+            glTextureStorage2D(depthAttach, 1, GL_DEPTH_COMPONENT24, width, height);
+
+            glNamedFramebufferTexture(fbo, GL_COLOR_ATTACHMENT0, colorAttach, 0);
+            glNamedFramebufferTexture(fbo, GL_DEPTH_ATTACHMENT, depthAttach, 0);
+        }
+    } offscreen;
+
     while (!glfwWindowShouldClose(wnd))
     {
         glfwPollEvents();
@@ -150,6 +182,9 @@ int main() {
         int width, height;
         glfwGetFramebufferSize(wnd, &width, &height);
         glViewport(0, 0, width, height);
+
+        offscreen.update(width, height);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, offscreen.fbo);
 
         glClearColor(0.2f, 0.2f, 0.2f, 0.2f);
         glClearDepth(1.0f);
@@ -170,6 +205,9 @@ int main() {
         glUseProgramStages(pipe, GL_FRAGMENT_SHADER_BIT, fs);
 
         glDrawArrays(GL_TRIANGLES, 0, sizeof(data::cube_verts) / sizeof(Vertex));
+
+        // simple color copy pass for now
+        glBlitNamedFramebuffer(offscreen.fbo, 0, 0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
         glfwSwapBuffers(wnd);
     }
