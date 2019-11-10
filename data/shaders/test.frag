@@ -6,6 +6,7 @@ layout(location=1) in vec3 norm;
 layout(location=0) out vec4 o_color;
 
 layout(binding=0) uniform usampler3D s_voxels;
+layout(binding=1) uniform sampler1D s_palette;
 uniform vec3 camera_pos;
 
 vec3 light_dir = normalize(vec3(1,0.3,0));
@@ -19,6 +20,8 @@ float max_along_axis(float o, float d)
         return abs((floor(o) - o) / d);
 }
 
+vec4 voxel_color = vec4(1);
+
 bool march(vec3 o, vec3 d, out vec3 n, out vec3 pp)
 {
     o -= 0.01 * d;   // slight fudge -- don't want `o` to be exactly on a plane
@@ -30,8 +33,10 @@ bool march(vec3 o, vec3 d, out vec3 n, out vec3 pp)
 
     while (t < 1.75*16)         // max cast across this thing is sqrt(3) * dim
     {
-        if (texelFetch(s_voxels, p, 0).x != 0)
+        uint value = texelFetch(s_voxels, p, 0).x;
+        if (value != 0)
         {
+            voxel_color = texelFetch(s_palette, int(value), 0);
             pp = o + t * d;
             return true;
         }
@@ -79,6 +84,6 @@ void main()
         o_color = vec4(0.4, 0.4, 0.4, 0.4);
     else
     {
-        o_color = vec4(pp/size, 1) * vec4(vec3(clamp(dot(n, light_dir), 0, 1)), 1);
+        o_color = voxel_color * vec4(vec3(clamp(dot(n, light_dir), 0, 1)), 1);
     }
 }
