@@ -6,5 +6,5 @@
 [ ] Allow transforming the volume
 [ ] Compute proper depth
 [ ] Splat the voxel models into a global map for GI/shadows/etc
-[ ] Integrate dear imgui so we can have some debug controls
+[x] Integrate dear imgui so we can have some debug controls
 [x] Render offscreen

@@ -3,7 +3,16 @@ project(ve)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(ve main.cpp ve.h shader.cpp vox.cpp)
+add_executable(ve
+        main.cpp
+        shader.cpp
+        vox.cpp
+        imgui/imgui.cpp
+        imgui/imgui_draw.cpp
+        imgui/imgui_impl_glfw.cpp
+        imgui/imgui_impl_opengl3.cpp
+        imgui/imgui_widgets.cpp
+        )
 
 find_package(OpenGL REQUIRED)
 find_package(glfw3 3.3 REQUIRED)

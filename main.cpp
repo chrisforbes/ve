@@ -5,6 +5,9 @@
 
 #include "ve.h"
 #include <GLFW/glfw3.h>
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
 
 void APIENTRY on_gl_error(GLenum, GLenum, GLuint, GLenum, GLsizei, char const * msg, void const *)
 {
@@ -84,6 +87,17 @@ namespace data {
     };
 }
 
+void gui()
+{
+    if (ImGui::BeginMainMenuBar())
+    {
+        char sz[128];
+        sprintf(sz, "%.3f ms | %.1f FPS", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::BeginMenu(sz, false);
+    }
+    ImGui::EndMainMenuBar();
+}
+
 int main() {
     if (!glfwInit())
         errx(1, "Failed to init GLFW");
@@ -127,7 +141,6 @@ int main() {
     float dist = 3;
 
     glfwSwapInterval(1);
-    glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
 
@@ -172,9 +185,20 @@ int main() {
         }
     } offscreen;
 
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(wnd, true);
+    ImGui_ImplOpenGL3_Init("#version 450 core");
+
     while (!glfwWindowShouldClose(wnd))
     {
         glfwPollEvents();
+
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
 
         angle += 0.01f;
         elev += 0.003f;
@@ -185,6 +209,7 @@ int main() {
 
         offscreen.update(width, height);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, offscreen.fbo);
+        glEnable(GL_DEPTH_TEST);
 
         glClearColor(0.2f, 0.2f, 0.2f, 0.2f);
         glClearDepth(1.0f);
@@ -206,8 +231,15 @@ int main() {
 
         glDrawArrays(GL_TRIANGLES, 0, sizeof(data::cube_verts) / sizeof(Vertex));
 
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+        glDisable(GL_DEPTH_TEST);
+
         // simple color copy pass for now
         glBlitNamedFramebuffer(offscreen.fbo, 0, 0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+        gui();
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwSwapBuffers(wnd);
     }
