@@ -3,7 +3,8 @@
 layout(location=0) in vec3 v_pos;
 layout(location=1) in vec3 v_norm;
 
-uniform mat4 mvp;
+uniform mat4 model;
+uniform mat4 vp;
 
 out gl_PerVertex
 {
@@ -19,5 +20,5 @@ void main()
     pos = v_pos;
     norm = v_norm;
 
-    gl_Position = mvp * vec4(v_pos, 1);
+    gl_Position = vp * (model * vec4(v_pos, 1));
 }

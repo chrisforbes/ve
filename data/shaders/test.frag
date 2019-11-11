@@ -8,8 +8,8 @@ layout(location=0) out vec4 o_color;
 layout(binding=0) uniform usampler3D s_voxels;
 layout(binding=1) uniform sampler1D s_palette;
 uniform vec3 camera_pos;
+uniform vec3 light_dir;
 
-vec3 light_dir = normalize(vec3(0.7,-0.3,0.3));
 ivec3 size = textureSize(s_voxels, 0).xyz;
 
 float max_along_axis(float o, float d)

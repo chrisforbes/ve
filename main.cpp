@@ -2,6 +2,7 @@
 #include <err.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 #include "ve.h"
 #include <GLFW/glfw3.h>
@@ -103,6 +104,8 @@ float angle = 0;
 float elev = 0.3;
 float dist = 3;
 
+float obj_angle;
+
 void gui()
 {
     if (ImGui::BeginMainMenuBar())
@@ -119,6 +122,8 @@ void gui()
     ImGui::SliderFloat("Angle", &angle, 0, 2 * M_PI);
     ImGui::SliderFloat("Elevation", &elev, -M_PI_2 * 0.9f, M_PI_2 * 0.9f);
     ImGui::SliderFloat("Distance", &dist, 0.4, 5);
+
+    ImGui::SliderFloat("Object Angle", &obj_angle, 0, 2 * M_PI);
 
     ImGui::End();
 }
@@ -236,22 +241,35 @@ int main() {
         glClearDepth(1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        auto target = glm::vec3(0.5f, 0.5f, 0.5f);
+        auto target = glm::vec3(0);
         auto eye = target + dist * glm::vec3(cosf(angle) * cosf(elev), sinf(angle) * cosf(elev), sinf(elev));
         auto up = glm::vec3(0,0, 1);
         auto view = glm::lookAt(eye, target, up);
         auto proj = glm::perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
+        auto vp = proj * view;
 
-        auto mvp = proj * view;
+        // Move the model center to the origin (so will occupy space -0.5..0.5)
+        // and rotate according to user parameter
+        auto model = glm::translate(
+                glm::rotate(glm::mat4(1), obj_angle, glm::vec3(0,0,1)),
+                glm::vec3(-0.5f));
 
-        glProgramUniformMatrix4fv(vs, glGetUniformLocation(vs, "mvp"), 1, GL_FALSE, &mvp[0][0]);
-        glProgramUniform3fv(fs, glGetUniformLocation(fs, "camera_pos"), 1, &eye[0]);
+        // Intersection & lighting is all done in model space, transform the world-space values by the inverse
+        // model matrix
+        auto invModel = glm::inverse(model);
+        auto modelspace_eye = (invModel * glm::vec4(eye, 1));
+        auto light_dir = invModel * glm::vec4(glm::normalize(glm::vec3(0.7f,-0.3f,0.3f)), 0);
 
         glUseProgramStages(pipe, GL_VERTEX_SHADER_BIT, vs);
         glUseProgramStages(pipe, GL_FRAGMENT_SHADER_BIT, fs);
 
         glBindTextures(0, 1, &vox);
         glBindTextures(1, 1, &pal);
+
+        glProgramUniformMatrix4fv(vs, glGetUniformLocation(vs, "model"), 1, GL_FALSE, &model[0][0]);
+        glProgramUniformMatrix4fv(vs, glGetUniformLocation(vs, "vp"), 1, GL_FALSE, &vp[0][0]);
+        glProgramUniform3fv(fs, glGetUniformLocation(fs, "camera_pos"), 1, &modelspace_eye[0]);
+        glProgramUniform3fv(fs, glGetUniformLocation(fs, "light_dir"), 1, &light_dir[0]);
         glDrawArrays(GL_TRIANGLES, 0, sizeof(data::cube_verts) / sizeof(Vertex));
 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);

@@ -5,8 +5,9 @@
 [x] Use proper voxel palette
 [x] Integrate dear imgui so we can have some debug controls
 [x] Render offscreen
-
 [x] Add depth visualization mode
-[ ] Allow transforming the volume
+[x] Allow transforming the volume
+[x] Factor model transform out so we can have multiple volumes
+
 [ ] Compute proper depth
 [ ] Splat the voxel models into a global map for GI/shadows/etc
