@@ -59,7 +59,7 @@ GLuint load_vox(char const *filename)
             fread(&numVoxels, sizeof(numVoxels), 1, f);
             for (int n = 0; n < numVoxels; n++)
             {
-                struct { char x, y, z, i; } v;
+                struct { char x, y, z, i; } v = {};
                 fread(&v, sizeof(v), 1, f);
                 data[v.x + v.y * size.x + v.z * size.x * size.y] = v.i+1;   /* zero == nothing here */
             }

@@ -105,6 +105,7 @@ float elev = 0.3;
 float dist = 3;
 
 float obj_angle;
+GLuint pipe;
 
 void gui()
 {
@@ -127,6 +128,36 @@ void gui()
 
     ImGui::End();
 }
+
+struct Grid
+{
+    glm::mat4 mat;
+    GLuint vox, pal;
+    GLuint vs, fs;
+
+    void draw(glm::vec3 const & eye, glm::mat4 const & vp)
+    {
+        // Intersection & lighting is all done in model space, transform the world-space values by the inverse
+        // model matrix
+        auto invModel = glm::inverse(this->mat);
+        auto modelspace_eye = (invModel * glm::vec4(eye, 1));
+        auto light_dir = invModel * glm::vec4(glm::normalize(glm::vec3(0.7f,-0.3f,0.3f)), 0);
+
+        GLuint textures[2] = { vox, pal };
+        glBindTextures(0, 2, textures);
+
+        glUseProgramStages(pipe, GL_VERTEX_SHADER_BIT, vs);
+        glUseProgramStages(pipe, GL_FRAGMENT_SHADER_BIT, fs);
+
+        glProgramUniformMatrix4fv(vs, glGetUniformLocation(vs, "model"), 1, GL_FALSE, &this->mat[0][0]);
+        glProgramUniformMatrix4fv(vs, glGetUniformLocation(vs, "vp"), 1, GL_FALSE, &vp[0][0]);
+        glProgramUniform3fv(fs, glGetUniformLocation(fs, "camera_pos"), 1, &modelspace_eye[0]);
+        glProgramUniform3fv(fs, glGetUniformLocation(fs, "light_dir"), 1, &light_dir[0]);
+        glDrawArrays(GL_TRIANGLES, 0, sizeof(data::cube_verts) / sizeof(Vertex));
+    }
+};
+
+Grid g;
 
 int main() {
     if (!glfwInit())
@@ -166,7 +197,6 @@ int main() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, x));
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, nx));
 
-    GLuint pipe;
     glGenProgramPipelines(1, &pipe);
     glBindProgramPipeline(pipe);
 
@@ -178,6 +208,12 @@ int main() {
     glCreateTextures(GL_TEXTURE_1D, 1, &pal);
     glTextureStorage1D(pal, 1, GL_SRGB8_ALPHA8, 256);
     glTextureSubImage1D(pal, 0, 0, 256, GL_RGBA, GL_UNSIGNED_BYTE, data::default_palette);
+
+    // Set up model
+    g.vs = vs;
+    g.fs = fs;
+    g.pal = pal;
+    g.vox = vox;
 
     struct {
         GLuint fbo = 0;
@@ -241,6 +277,12 @@ int main() {
         glClearDepth(1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // Move the model center to the origin (so will occupy space -0.5..0.5)
+        // and rotate according to user parameter
+        g.mat = glm::translate(
+                glm::rotate(glm::mat4(1), obj_angle, glm::vec3(0,0,1)),
+                glm::vec3(-0.5f));
+
         auto target = glm::vec3(0);
         auto eye = target + dist * glm::vec3(cosf(angle) * cosf(elev), sinf(angle) * cosf(elev), sinf(elev));
         auto up = glm::vec3(0,0, 1);
@@ -248,29 +290,7 @@ int main() {
         auto proj = glm::perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
         auto vp = proj * view;
 
-        // Move the model center to the origin (so will occupy space -0.5..0.5)
-        // and rotate according to user parameter
-        auto model = glm::translate(
-                glm::rotate(glm::mat4(1), obj_angle, glm::vec3(0,0,1)),
-                glm::vec3(-0.5f));
-
-        // Intersection & lighting is all done in model space, transform the world-space values by the inverse
-        // model matrix
-        auto invModel = glm::inverse(model);
-        auto modelspace_eye = (invModel * glm::vec4(eye, 1));
-        auto light_dir = invModel * glm::vec4(glm::normalize(glm::vec3(0.7f,-0.3f,0.3f)), 0);
-
-        glUseProgramStages(pipe, GL_VERTEX_SHADER_BIT, vs);
-        glUseProgramStages(pipe, GL_FRAGMENT_SHADER_BIT, fs);
-
-        glBindTextures(0, 1, &vox);
-        glBindTextures(1, 1, &pal);
-
-        glProgramUniformMatrix4fv(vs, glGetUniformLocation(vs, "model"), 1, GL_FALSE, &model[0][0]);
-        glProgramUniformMatrix4fv(vs, glGetUniformLocation(vs, "vp"), 1, GL_FALSE, &vp[0][0]);
-        glProgramUniform3fv(fs, glGetUniformLocation(fs, "camera_pos"), 1, &modelspace_eye[0]);
-        glProgramUniform3fv(fs, glGetUniformLocation(fs, "light_dir"), 1, &light_dir[0]);
-        glDrawArrays(GL_TRIANGLES, 0, sizeof(data::cube_verts) / sizeof(Vertex));
+        g.draw(eye, vp);
 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         glDisable(GL_DEPTH_TEST);
