@@ -135,7 +135,7 @@ struct Grid
     GLuint vox, pal;
     GLuint vs, fs;
 
-    void draw(glm::vec3 const & eye, glm::mat4 const & vp)
+    void draw(glm::vec3 const & eye, glm::mat4 const & vp) const
     {
         // Intersection & lighting is all done in model space, transform the world-space values by the inverse
         // model matrix
@@ -157,7 +157,7 @@ struct Grid
     }
 };
 
-Grid g;
+Grid g[3];
 
 int main() {
     if (!glfwInit())
@@ -210,10 +210,27 @@ int main() {
     glTextureSubImage1D(pal, 0, 0, 256, GL_RGBA, GL_UNSIGNED_BYTE, data::default_palette);
 
     // Set up model
-    g.vs = vs;
-    g.fs = fs;
-    g.pal = pal;
-    g.vox = vox;
+    g[0].vs = vs;
+    g[0].fs = fs;
+    g[0].pal = pal;
+    g[0].vox = vox;
+
+    // Set up model
+    g[1].vs = vs;
+    g[1].fs = fs;
+    g[1].pal = pal;
+    g[1].vox = vox;
+    g[1].mat = glm::translate(
+            glm::rotate(glm::translate(glm::mat4(1), glm::vec3(1,0,0)), obj_angle, glm::vec3(0,0,1)),
+            glm::vec3(-0.5f));
+    // Set up model
+    g[2].vs = vs;
+    g[2].fs = fs;
+    g[2].pal = pal;
+    g[2].vox = vox;
+    g[2].mat = glm::translate(
+            glm::rotate(glm::translate(glm::mat4(1), glm::vec3(-1,0,0)), obj_angle, glm::vec3(0,0,1)),
+            glm::vec3(-0.5f));
 
     struct {
         GLuint fbo = 0;
@@ -279,7 +296,7 @@ int main() {
 
         // Move the model center to the origin (so will occupy space -0.5..0.5)
         // and rotate according to user parameter
-        g.mat = glm::translate(
+        g[0].mat = glm::translate(
                 glm::rotate(glm::mat4(1), obj_angle, glm::vec3(0,0,1)),
                 glm::vec3(-0.5f));
 
@@ -290,7 +307,8 @@ int main() {
         auto proj = glm::perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
         auto vp = proj * view;
 
-        g.draw(eye, vp);
+        for (auto const & g_ : g)
+            g_.draw(eye, vp);
 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         glDisable(GL_DEPTH_TEST);
