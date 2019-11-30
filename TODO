@@ -8,6 +8,16 @@
 [x] Add depth visualization mode
 [x] Allow transforming the volume
 [x] Factor model transform out so we can have multiple volumes
+[x] Draw multiple models
 
+[ ] First person camera
 [ ] Compute proper depth
 [ ] Splat the voxel models into a global map for GI/shadows/etc
+[ ] Integrate physics system
+[ ] Object splitting
+    - Do union-find across the voxel field
+    - Maintain multiple subobjects in the same field? Keep additional subobjectid field?
+        - Requires ping-ponged subobjectid fields to prevent accidental fusing -- connectivity is based on
+          old subobjectids matching
+    - How does any of this work in a material-aware way?
+        - Single-voxel 'Bolts' as cross-material connectivity?
