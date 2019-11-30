@@ -103,6 +103,7 @@ char const *render_mode_list[] = { "Color", "Depth" };
 float angle = 0;
 float elev = 0.3;
 float dist = 3;
+float xoff = 0;
 
 float obj_angle;
 GLuint pipe;
@@ -125,6 +126,7 @@ void gui()
     ImGui::SliderFloat("Distance", &dist, 0.4, 5);
 
     ImGui::SliderFloat("Object Angle", &obj_angle, 0, 2 * M_PI);
+    ImGui::SliderFloat("Object X", &xoff, -3, 3);
 
     ImGui::End();
 }
@@ -297,7 +299,7 @@ int main() {
         // Move the model center to the origin (so will occupy space -0.5..0.5)
         // and rotate according to user parameter
         g[0].mat = glm::translate(
-                glm::rotate(glm::mat4(1), obj_angle, glm::vec3(0,0,1)),
+                glm::rotate(glm::translate(glm::mat4(1), glm::vec3(xoff, 0, 0)), obj_angle, glm::vec3(0,0,1)),
                 glm::vec3(-0.5f));
 
         auto target = glm::vec3(0);
